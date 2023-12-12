@@ -1,6 +1,6 @@
 ## Supervisor for poor
 
-This is a custom Laravel Artisan command that checks if specified commands are running and starts them if not.
+This Git repository provides a solution for free backups of "pet projects." It automates the process of creating database dumps and delivers them to your Telegram account, offering a convenient and cost-free backup solution.
 
 ```php
 // Config
