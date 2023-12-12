@@ -15,3 +15,5 @@ $schedule->command('backup:database')->->dailyAt('19:02')->runInBackground();
 ```bash
 php artisan backup:database
 ```
+
+## TODO: Split backup fot 50 MB
