@@ -55,4 +55,62 @@ class FilesController
 
         return $zip_path;
     }
+
+    /**
+     * Split a file into chunks of $chunkSize bytes.
+     *
+     * Returns part paths ("<zip>.001", "<zip>.002", ...), or [$path] when the
+     * file already fits in a single chunk. Restore: cat <zip>.0* > <zip>
+     *
+     * @param string $path
+     * @param int $chunkSize
+     * @return array
+     */
+    public function split(string $path, int $chunkSize): array
+    {
+        if (filesize($path) <= $chunkSize) {
+            return [$path];
+        }
+
+        $in = fopen($path, 'rb');
+        if ($in === false) {
+            throw new \RuntimeException("Cannot open file for read: {$path}");
+        }
+
+        $parts = [];
+        try {
+            $index = 1;
+            while (!feof($in)) {
+                $written = 0;
+                $partPath = sprintf('%s.%03d', $path, $index);
+                $out = fopen($partPath, 'wb');
+                if ($out === false) {
+                    throw new \RuntimeException("Cannot open file for write: {$partPath}");
+                }
+                try {
+                    while ($written < $chunkSize && !feof($in)) {
+                        $buffer = fread($in, min(1024 * 1024, $chunkSize - $written));
+                        if ($buffer === false || $buffer === '') {
+                            break;
+                        }
+                        $written += fwrite($out, $buffer);
+                    }
+                } finally {
+                    fclose($out);
+                }
+
+                if ($written === 0) {
+                    File::delete($partPath);
+                    break;
+                }
+
+                $parts[] = $partPath;
+                $index++;
+            }
+        } finally {
+            fclose($in);
+        }
+
+        return $parts;
+    }
 }

@@ -5,8 +5,6 @@ namespace Flamix\LaravelBackup\Console\Commands;
 use Flamix\LaravelBackup\FilesController;
 use Flamix\LaravelBackup\TelegramController;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 
 /**
@@ -61,8 +59,18 @@ class DatabaseBackup extends Command
             }
 
             if (config('backup.telegram.enabled')) {
-                $this->log("Sending to telegram...");
-                $telegram->sendFile($zip_path);
+                $parts = $filesController->split($zip_path, (int) config('backup.telegram.chunk_size'));
+                $total = count($parts);
+
+                foreach ($parts as $i => $part) {
+                    $this->log("Sending to telegram (" . ($i + 1) . "/{$total})...");
+                    $caption = $total > 1 ? sprintf('part %d/%d', $i + 1, $total) : null;
+                    $telegram->sendFile($part, $caption);
+                }
+
+                if ($total > 1) {
+                    $telegram->sendMessage("ℹ️ Backup split into {$total} parts. Restore: cat *.zip.0* > backup.zip && unzip backup.zip");
+                }
             }
         } catch (\Throwable $e) {
             $msg = "❌ Database backup failed for " . config('app.name') . ": " . $e->getMessage();
@@ -146,36 +154,5 @@ class DatabaseBackup extends Command
         } else {
             $this->comment($msg);
         }
-    }
-
-    /**
-     * Run process as a user.
-     *
-     * @param string $cmd
-     * @return string
-     */
-    private function runProcess(string $cmd)
-    {
-        $process = Process::fromShellCommandline($cmd);
-        $process->run();
-        return $process->getOutput();
-    }
-
-    /**
-     * Prepare ignore tables.
-     * For example logs tables.
-     *
-     * @return string
-     */
-    private function prepareIgnoreTables(): string
-    {
-        $db_name = config('database.connections.mysql.database');
-        $ignore_tables = config('backup.database.ignore', []);
-        if (empty($ignore_tables)) {
-            return '';
-        }
-
-        $ignore_tables = array_map(fn($table) => "--ignore-table={$db_name}.{$table}", $ignore_tables);
-        return implode(' ', $ignore_tables);
     }
 }

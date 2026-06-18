@@ -25,5 +25,16 @@ return [
         'enabled' => env('BACKUP_TELEGRAM_ENABLED', true),
         'token' => env('BACKUP_TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('BACKUP_TELEGRAM_CHAT_ID'),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Chunk size
+        |--------------------------------------------------------------------------
+        |
+        | Telegram Bot API limits sendDocument to 50 MB. Bigger zips are split
+        | into chunks of this size (bytes) and sent as separate documents.
+        |
+        */
+        'chunk_size' => env('BACKUP_TELEGRAM_CHUNK_SIZE', 45 * 1024 * 1024),
     ]
 ];
