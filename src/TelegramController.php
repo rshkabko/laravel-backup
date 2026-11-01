@@ -4,6 +4,7 @@ namespace Flamix\LaravelBackup;
 
 use Illuminate\Support\Facades\Http;
 
+/** Sends the backup files and messages to backup.telegram.chat_id through the Bot API. */
 class TelegramController
 {
     public function sendFile(string $path, ?string $caption = null): array

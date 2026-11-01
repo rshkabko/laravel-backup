@@ -5,12 +5,14 @@ namespace Flamix\LaravelBackup;
 use Illuminate\Support\Facades\File;
 use ZipArchive;
 
+/** The temporary storage/backup/<time> folder: dumps, the zip and its parts. */
 class FilesController
 {
     private ?int $time = null;
 
     public function path(?string $file = null): string
     {
+        // Frozen on first call: every file of one run must land in the same folder.
         if (!$this->time) {
             $this->time = time();
         }
@@ -24,6 +26,7 @@ class FilesController
 
     public function deleteDirectory(): void
     {
+        // The whole storage/backup, not this run's folder: leftovers of crashed runs go too.
         if (File::isDirectory(storage_path("backup"))) {
             File::deleteDirectory(storage_path("backup"));
         }
@@ -34,18 +37,12 @@ class FilesController
         File::makeDirectory($this->path(), 0755, true, true);
     }
 
-    /**
-     * Zip directory and delete (optional).
-     *
-     * @param string $directory
-     * @param bool $delete
-     * @return string
-     */
+    /** Zips every file of the run folder into <Y_m_d_H_i>.zip inside it and returns its path. */
     public function zipping(): string
     {
         $files = File::files($this->path());
         $zip = new ZipArchive();
-        $zip_path = $this->path(now()->format("Y_m_d_H_m") . '.zip');
+        $zip_path = $this->path(now()->format("Y_m_d_H_i") . '.zip');
         $zip->open($zip_path, ZipArchive::CREATE | ZipArchive::OVERWRITE);
         foreach ($files as $file) {
             $relativeNameInZipFile = basename($file);
@@ -57,14 +54,9 @@ class FilesController
     }
 
     /**
-     * Split a file into chunks of $chunkSize bytes.
+     * Splits a file into "<path>.001", "<path>.002", … of $chunkSize bytes, or returns [$path] when it fits.
      *
-     * Returns part paths ("<zip>.001", "<zip>.002", ...), or [$path] when the
-     * file already fits in a single chunk. Restore: cat <zip>.0* > <zip>
-     *
-     * @param string $path
-     * @param int $chunkSize
-     * @return array
+     * @return list<string>
      */
     public function split(string $path, int $chunkSize): array
     {

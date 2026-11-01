@@ -7,9 +7,7 @@ use Flamix\LaravelBackup\TelegramController;
 use Illuminate\Console\Command;
 use Symfony\Component\Process\Process;
 
-/**
- * php artisan backup:database
- */
+/** backup:database: mysqldump of the mysql connection, zipped and sent to Telegram. */
 class DatabaseBackup extends Command
 {
     protected $signature = 'backup:database';
@@ -24,11 +22,11 @@ class DatabaseBackup extends Command
         $db_port = (string) config('database.connections.mysql.port', 3306);
 
         if (!config('backup.database.enabled')) {
-            $this->log("Database backup is disabled!");
+            $this->comment("Database backup is disabled!");
             return;
         }
 
-        $this->log("Start! Delete and create directory {$filesController->path()}");
+        $this->comment("Start! Delete and create directory {$filesController->path()}");
         $filesController->deleteDirectory();
         $filesController->createDirectory();
 
@@ -36,24 +34,24 @@ class DatabaseBackup extends Command
             $structurePath = $filesController->path("structure_{$db_name}.sql");
             $dataPath = $filesController->path("data_{$db_name}.sql");
 
-            $this->log("Backuping structure...");
+            $this->comment("Backuping structure...");
             $this->dump(
                 ['--no-tablespaces', '--no-data', $db_name],
                 $structurePath, $db_host, $db_port, $db_user, $db_pwd
             );
             $this->ensureNotEmpty($structurePath);
 
-            $this->log("Backuping data...");
+            $this->comment("Backuping data...");
             $this->dump(
                 array_merge(['--no-tablespaces'], $this->prepareIgnoreTablesArgs(), [$db_name]),
                 $dataPath, $db_host, $db_port, $db_user, $db_pwd
             );
             $this->ensureNotEmpty($dataPath);
 
-            $this->log("Zipping...");
+            $this->comment("Zipping...");
             $zip_path = $filesController->zipping();
             $zip_size = file_exists($zip_path) ? filesize($zip_path) : 0;
-            $this->log("Zip size: {$zip_size} bytes");
+            $this->comment("Zip size: {$zip_size} bytes");
             if ($zip_size < 1024) {
                 throw new \RuntimeException("Backup zip is suspiciously small ({$zip_size} bytes)");
             }
@@ -63,7 +61,7 @@ class DatabaseBackup extends Command
                 $total = count($parts);
 
                 foreach ($parts as $i => $part) {
-                    $this->log("Sending to telegram (" . ($i + 1) . "/{$total})...");
+                    $this->comment("Sending to telegram (" . ($i + 1) . "/{$total})...");
                     $caption = $total > 1 ? sprintf('part %d/%d', $i + 1, $total) : null;
                     $telegram->sendFile($part, $caption);
                 }
@@ -84,14 +82,12 @@ class DatabaseBackup extends Command
             }
             throw $e;
         } finally {
-            $this->log("Finish! Clear directory!");
+            $this->comment("Finish! Clear directory!");
             $filesController->deleteDirectory();
         }
     }
 
-    /**
-     * Run mysqldump streaming stdout to a file. Throws on non-zero exit.
-     */
+    /** Runs mysqldump with stdout streamed to $output; throws on a non-zero exit. */
     private function dump(array $args, string $output, string $host, string $port, string $user, string $pwd): void
     {
         $cmd = array_merge(
@@ -99,6 +95,7 @@ class DatabaseBackup extends Command
             $args
         );
 
+        // MYSQL_PWD, not -p: argv is visible to every user of the server in ps.
         $process = new Process($cmd, null, ['MYSQL_PWD' => $pwd]);
         $process->setTimeout(600);
 
@@ -137,22 +134,5 @@ class DatabaseBackup extends Command
             return [];
         }
         return array_map(fn($table) => "--ignore-table={$db_name}.{$table}", $ignore_tables);
-    }
-
-    /**
-     * Logging.
-     *
-     * @param string $msg
-     * @param array $arg
-     * @return void
-     */
-    private function log(string $msg, array $arg = [])
-    {
-        // info($msg, $arg); // Debug in console
-        if (!empty($arg)) {
-            dump($msg, $arg);
-        } else {
-            $this->comment($msg);
-        }
     }
 }

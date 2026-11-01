@@ -4,13 +4,9 @@ namespace Flamix\LaravelBackup;
 
 use Illuminate\Support\ServiceProvider;
 
+/** Merges config/backup.php and registers the backup:database command. */
 class LaravelBackupProvider extends ServiceProvider
 {
-    /**
-     * Register bindings in the container.
-     *
-     * @return void
-     */
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/backup.php', 'backup');

@@ -1,0 +1,50 @@
+name: Laravel
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Into its own folder, required by path: a PR tests the PR, not main.
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          path: package
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: mbstring, dom, zip
+          tools: composer:v2
+
+      - name: Install Laravel
+        run: composer create-project --prefer-dist --no-interaction laravel/laravel:^13.0 laravel
+
+      # No flamix/* dependencies, so neither Satis nor PACKAGES_TOKEN is needed.
+      - name: Install dependencies
+        working-directory: laravel
+        run: |
+          composer config minimum-stability dev
+          composer config prefer-stable true
+          composer config repositories.package '{"type": "path", "url": "${{ github.workspace }}/package", "options": {"symlink": true}}'
+          composer require --no-interaction flamix/laravel-backup:@dev
+          composer require --no-interaction --dev orchestra/testbench
+
+      # Symlinked package: ../../autoload.php from phpunit.xml resolves inside package/, hence --bootstrap.
+      - name: Run tests
+        working-directory: laravel
+        run: >
+          ./vendor/bin/phpunit ./vendor/flamix/laravel-backup/tests
+          --configuration ./vendor/flamix/laravel-backup/phpunit.xml
+          --bootstrap ./vendor/autoload.php
+          --testdox
