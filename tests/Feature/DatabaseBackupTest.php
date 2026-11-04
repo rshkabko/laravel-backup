@@ -28,9 +28,15 @@ class DatabaseBackupTest extends TestCase
     protected function defineEnvironment($app)
     {
         $app['config']->set('app.name', 'Shop');
-        $app['config']->set('database.connections.mysql', [
-            'driver' => 'mysql', 'host' => 'db.local', 'port' => 3307,
+        $app['config']->set('database.default', 'mariadb');
+        $app['config']->set('database.connections.mariadb', [
+            'driver' => 'mariadb', 'host' => 'db.local', 'port' => 3307,
             'database' => 'shop', 'username' => 'shop_user', 'password' => 's3cret', 'prefix' => '',
+        ]);
+        // A different mysql connection proves the dump follows database.default, not a hardcoded name.
+        $app['config']->set('database.connections.mysql', [
+            'driver' => 'mysql', 'host' => 'other.host', 'port' => 3306,
+            'database' => 'other', 'username' => 'other_user', 'password' => 'other', 'prefix' => '',
         ]);
         $app['config']->set('backup.telegram.token', 'fake-token');
         $app['config']->set('backup.telegram.chat_id', '-100500');
@@ -93,7 +99,7 @@ class DatabaseBackupTest extends TestCase
         $this->assertDirectoryDoesNotExist(storage_path('backup'));
     }
 
-    public function test_mysqldump_gets_the_mysql_connection_and_the_password_only_through_the_environment()
+    public function test_mysqldump_gets_the_default_connection_and_the_password_only_through_the_environment()
     {
         config(['backup.database.ignore' => ['cache', 'activity_log']]);
 

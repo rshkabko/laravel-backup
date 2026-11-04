@@ -7,7 +7,7 @@ use Flamix\LaravelBackup\TelegramController;
 use Illuminate\Console\Command;
 use Symfony\Component\Process\Process;
 
-/** backup:database: mysqldump of the mysql connection, zipped and sent to Telegram. */
+/** backup:database: mysqldump of the default database connection, zipped and sent to Telegram. */
 class DatabaseBackup extends Command
 {
     protected $signature = 'backup:database';
@@ -15,11 +15,12 @@ class DatabaseBackup extends Command
 
     public function handle(FilesController $filesController, TelegramController $telegram)
     {
-        $db_name = config('database.connections.mysql.database');
-        $db_user = config('database.connections.mysql.username');
-        $db_pwd = config('database.connections.mysql.password');
-        $db_host = config('database.connections.mysql.host', '127.0.0.1');
-        $db_port = (string) config('database.connections.mysql.port', 3306);
+        $connection = config('database.connections.' . config('database.default'), []);
+        $db_name = $connection['database'] ?? '';
+        $db_user = $connection['username'] ?? '';
+        $db_pwd = (string) ($connection['password'] ?? '');
+        $db_host = $connection['host'] ?? '127.0.0.1';
+        $db_port = (string) ($connection['port'] ?? 3306);
 
         if (!config('backup.database.enabled')) {
             $this->comment("Database backup is disabled!");
@@ -43,7 +44,7 @@ class DatabaseBackup extends Command
 
             $this->comment("Backuping data...");
             $this->dump(
-                array_merge(['--no-tablespaces'], $this->prepareIgnoreTablesArgs(), [$db_name]),
+                array_merge(['--no-tablespaces'], $this->prepareIgnoreTablesArgs($db_name), [$db_name]),
                 $dataPath, $db_host, $db_port, $db_user, $db_pwd
             );
             $this->ensureNotEmpty($dataPath);
@@ -126,9 +127,8 @@ class DatabaseBackup extends Command
         }
     }
 
-    private function prepareIgnoreTablesArgs(): array
+    private function prepareIgnoreTablesArgs(string $db_name): array
     {
-        $db_name = config('database.connections.mysql.database');
         $ignore_tables = config('backup.database.ignore', []);
         if (empty($ignore_tables)) {
             return [];

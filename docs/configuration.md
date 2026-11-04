@@ -17,7 +17,7 @@ BACKUP_TELEGRAM_CHAT_ID=-1001234567890
 BACKUP_TELEGRAM_CHUNK_SIZE=47185920 # optional, bytes; leave the line out rather than empty: empty is 0 and sends nothing
 ```
 
-The database credentials are not here: they come from `config('database.connections.mysql.*')` (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`), whatever `DB_CONNECTION` says.
+The database credentials are not here: they come from the default connection, `config('database.connections.<DB_CONNECTION>.*')` (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).
 
 ## config/backup.php
 
@@ -50,4 +50,4 @@ php artisan vendor:publish --provider="Flamix\LaravelBackup\LaravelBackupProvide
 ],
 ```
 
-The connection prefix is not added. With `database.connections.mysql.prefix` set to `app_`, write `'app_cache'`, otherwise nothing is ignored.
+The connection prefix is not added. With the default connection's `prefix` set to `app_`, write `'app_cache'`, otherwise nothing is ignored.

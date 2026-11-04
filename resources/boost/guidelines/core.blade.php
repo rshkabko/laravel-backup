@@ -5,7 +5,7 @@ One artisan command that dumps the MySQL/MariaDB database with `mysqldump`, zips
 
 - Do not hand-roll a dump job: schedule `Schedule::command('backup:database')->dailyAt('01:07')->runInBackground()` in `routes/console.php`. The package schedules nothing itself.
 - Run it: `{{ $assist->artisanCommand('backup:database') }}`. The server needs the `mysqldump` binary on `PATH`.
-- It always reads `database.connections.mysql`, whatever `DB_CONNECTION` is. Only the connection named `mysql` is dumped; renaming it breaks the run.
+- It dumps the default connection (`DB_CONNECTION`): host, port, database and credentials come from `database.connections.<default>`.
 - Env: `BACKUP_TELEGRAM_BOT_TOKEN`, `BACKUP_TELEGRAM_CHAT_ID`, `BACKUP_ENABLED`, `BACKUP_TELEGRAM_ENABLED`, `BACKUP_TELEGRAM_CHUNK_SIZE`. With Telegram disabled the dump is made and deleted: nothing is kept.
 - `backup.database.ignore` takes full table names: the connection prefix is not added.
 - A failure is sent to the chat (when Telegram is enabled) and rethrown, so the scheduled run exits non-zero. `storage/backup` is wiped before and after every run.
