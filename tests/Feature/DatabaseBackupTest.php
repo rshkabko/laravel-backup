@@ -129,8 +129,6 @@ class DatabaseBackupTest extends TestCase
 
     public function test_an_empty_chunk_size_still_delivers_the_backup()
     {
-        $this->markTestIncomplete('Bug: an empty BACKUP_TELEGRAM_CHUNK_SIZE casts to 0, src/FilesController.php:63 split() returns [] and the command reports success having sent nothing.');
-
         config(['backup.telegram.chunk_size' => '']);
 
         $this->artisan('backup:database')->assertExitCode(0);

@@ -14,7 +14,7 @@ BACKUP_ENABLED=true                 # false: the command prints "Database backup
 BACKUP_TELEGRAM_ENABLED=true        # false: the dump is still made, then deleted; nothing is kept
 BACKUP_TELEGRAM_BOT_TOKEN=123456:ABC...
 BACKUP_TELEGRAM_CHAT_ID=-1001234567890
-BACKUP_TELEGRAM_CHUNK_SIZE=47185920 # optional, bytes; leave the line out rather than empty: empty is 0 and sends nothing
+BACKUP_TELEGRAM_CHUNK_SIZE=47185920 # optional, bytes; empty or 0 sends the zip whole
 ```
 
 The database credentials are not here: they come from the default connection, `config('database.connections.<DB_CONNECTION>.*')` (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).

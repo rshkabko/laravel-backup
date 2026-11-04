@@ -13,7 +13,7 @@ return [
         'token' => env('BACKUP_TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('BACKUP_TELEGRAM_CHAT_ID'),
 
-        // Under the 50 MB sendDocument limit; an empty env value casts to 0 and sends nothing.
+        // Under the 50 MB sendDocument limit; empty or 0 sends the zip whole.
         'chunk_size' => env('BACKUP_TELEGRAM_CHUNK_SIZE', 45 * 1024 * 1024),
     ]
 ];

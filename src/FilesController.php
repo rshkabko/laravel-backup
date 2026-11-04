@@ -60,7 +60,8 @@ class FilesController
      */
     public function split(string $path, int $chunkSize): array
     {
-        if (filesize($path) <= $chunkSize) {
+        // 0 comes from an empty or missing chunk_size: it must still deliver the whole file, not nothing.
+        if ($chunkSize <= 0 || filesize($path) <= $chunkSize) {
             return [$path];
         }
 

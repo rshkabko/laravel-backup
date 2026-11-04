@@ -13,7 +13,7 @@ Full docs: vendor/flamix/laravel-backup/docs/configuration.md and backup.md. Bel
 
 | What you see | Cause | Do this |
 |---|---|---|
-| Exit 0, nothing in the chat, «Zip size: N bytes» with no «Sending to telegram (1/…)» after it | `BACKUP_TELEGRAM_ENABLED=false` (the zip is deleted at the end), or `BACKUP_TELEGRAM_CHUNK_SIZE=` present but empty: it casts to 0 and `split()` returns no parts | Check `BACKUP_TELEGRAM_ENABLED` first; then remove the empty chunk-size line or give it bytes |
+| Exit 0, nothing in the chat, «Zip size: N bytes» with no «Sending to telegram (1/…)» after it | `BACKUP_TELEGRAM_ENABLED=false`: the zip is deleted at the end | Set `BACKUP_TELEGRAM_ENABLED=true` |
 | Exit 0, nothing in the chat, «Database backup is disabled!» | `BACKUP_ENABLED=false` | Set it to `true` |
 | «mysqldump failed (exit 127)» | No `mysqldump` binary on the server's `PATH` | Install `mysql-client` / `mariadb-client` |
 | «mysqldump failed (exit 2): Access denied» | The default connection's credentials are wrong for `mysqldump`, or the DB user has no grant for the host it connects from | Check `DB_*` env and the user's host grant |
